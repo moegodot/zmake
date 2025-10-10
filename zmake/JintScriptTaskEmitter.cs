@@ -1,5 +1,7 @@
 using System.Text;
 using Jint;
+using Jint.Native;
+using Jint.Runtime;
 
 namespace ZMake;
 
@@ -29,13 +31,23 @@ public class JintScriptTaskEmitter : ITaskEmitter
     {
         engine.Modules.Add("zmake", builder =>
         {
-            builder.ExportFunction("", (string version) =>
+            builder.ExportValue("version", new JsString());
+            
+            var funcName = "requireVersion";
+            builder.ExportFunction(funcName, (JsValue[] args) =>
             {
-                if (Program.Version < Version.Parse(version))
+                ZMakeScriptException.ThrowIfArgumentsCountWrong(funcName,args,1);
+                ZMakeScriptException.ThrowIfArgumentsTypeWrong(funcName,args,1, Types.String);
+
+                var requireVersion = Version.Parse(args[0].AsString());
+                
+                if (Program.Version < requireVersion)
                 {
-                    
+                    throw new ZMakeScriptException(
+                        $"require zmake version {requireVersion} but run at version {Program.Version}");
                 }
             });
+            
             builder.ExportType<Artifact>();
         });
         
