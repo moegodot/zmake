@@ -28,4 +28,16 @@ public class ZMakeScriptException : Exception
         throw new ZMakeScriptException(
             $"zmake.{funcName} expect {expected} type at arguments[{index} but get {arg.Type}");
     }
+
+    public static void ThrowIfArgumentNotMatch(string funcName, JsValue[] args, params Types[] types)
+    {
+        ThrowIfArgumentsCountWrong(funcName, args, types.Length);
+
+        int index = 0;
+        foreach (var arg in args)
+        {
+            ThrowIfArgumentsTypeWrong(funcName,args,index, types[index]);
+            index += 1;
+        }
+    }
 }

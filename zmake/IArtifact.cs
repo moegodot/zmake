@@ -9,5 +9,4 @@ public interface IArtifact : IEquatable<IArtifact>
     string GroupId { get; }
     string ArtifactId { get; }
     string Version { get; }
-    
 }

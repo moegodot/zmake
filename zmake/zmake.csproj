@@ -9,6 +9,7 @@
         <InvariantGlobalization>true</InvariantGlobalization>
         <IsAotCompatible>true</IsAotCompatible>
         <RootNamespace>ZMake</RootNamespace>
+        <Version>0.1.0</Version>
     </PropertyGroup>
 
     <ItemGroup>
