@@ -1,12 +1,13 @@
 using System.Text;
 using System.Text.Json.Nodes;
+using Acornima.Ast;
 using Jint;
 using Jint.Native;
 using Jint.Runtime;
 
 namespace ZMake;
 
-public class JintScriptTaskEmitter : ITaskEmitter
+public class JintScriptTargetEmitter : ITargetEmitter
 {
     public string Specific { get; init; }
     
@@ -14,15 +15,16 @@ public class JintScriptTaskEmitter : ITaskEmitter
 
     private record JintScript(string ScriptPath)
     {
+        
     }
 
-    public JintScriptTaskEmitter(string scriptPath)
+    public JintScriptTargetEmitter(string scriptPath)
     {
         Specific = Path.GetFullPath(scriptPath);
         Script = null;
     }
 
-    public JintScriptTaskEmitter(string script, string specific)
+    public JintScriptTargetEmitter(string script, string specific)
     {
         Specific = specific;
         Script = script;
@@ -33,8 +35,6 @@ public class JintScriptTaskEmitter : ITaskEmitter
         engine.Modules.Add("zmake:internal", builder =>
         {
             builder.ExportValue("version", Program.VersionString);
-            
-            
         });
         
         return engine;
@@ -91,7 +91,7 @@ public class JintScriptTaskEmitter : ITaskEmitter
             {
                 var obj = artifact.AsObject();
                 
-                artifacts.Add(new(
+                artifacts.Add(Artifact.Create(
                     obj[nameof(Artifact.GroupId)].AsString(),
                     obj[nameof(Artifact.ArtifactId)].AsString(),
                     obj[nameof(Artifact.Version)].AsString()));
@@ -100,7 +100,7 @@ public class JintScriptTaskEmitter : ITaskEmitter
         else
         {
             var obj = results.AsObject();
-            artifacts.Add(new(
+            artifacts.Add(Artifact.Create(
                 obj[nameof(Artifact.GroupId)].AsString(),
                 obj[nameof(Artifact.ArtifactId)].AsString(),
                 obj[nameof(Artifact.Version)].AsString()));

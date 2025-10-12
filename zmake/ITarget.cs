@@ -2,9 +2,9 @@ namespace ZMake;
 
 public interface ITarget
 {
-    IEnumerable<IName> Name { get; }
+    Name Name { get; }
     
-    IEnumerable<IName> Requirements { get; }
+    IEnumerable<Name> Requirements { get; }
 
     IEnumerable<ITask> Tasks { get; }
 }

@@ -1,13 +1,13 @@
 namespace ZMake;
 
-public class Name : IName
+public sealed class Name : IEquatable<Name>
 {
-    public required IArtifact Artifact { get; init; }
+    public required Artifact Artifact { get; init; }
     public required IEnumerable<string> Names { get; init; }
     
     public override bool Equals(object? obj)
     {
-        return ReferenceEquals(this, obj) || obj is IName other && Equals(other);
+        return ReferenceEquals(this, obj) || obj is Name other && Equals(other);
     }
 
     public override int GetHashCode()
@@ -20,7 +20,7 @@ public class Name : IName
         return $"{Artifact}:{string.Join(':', Names)}";
     }
 
-    public bool Equals(IName? other)
+    public bool Equals(Name? other)
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;

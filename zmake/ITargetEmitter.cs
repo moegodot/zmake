@@ -1,6 +1,6 @@
 namespace ZMake;
 
-public interface ITaskEmitter
+public interface ITargetEmitter
 {
     Task<IEnumerable<ITask>> Emit(
         BuildContext context,

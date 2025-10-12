@@ -2,12 +2,12 @@ namespace ZMake;
 
 public sealed class Target : ITarget
 {
-    public IEnumerable<IName> Name { get; init; } = [];
-    public IEnumerable<IName> Requirements { get; init; } = [];
-    public IEnumerable<ITask> Tasks { get; init; } = [];
+    public Name Name { get; init; }
+    public IEnumerable<Name> Requirements { get; init; }
+    public IEnumerable<ITask> Tasks { get; init; }
 
-    public Target(IEnumerable<IName> name,
-        IEnumerable<IName> requirements, 
+    public Target(Name name,
+        IEnumerable<Name> requirements, 
         IEnumerable<ITask> tasks)
     {
         Name = name;
