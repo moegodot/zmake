@@ -1,0 +1,1 @@
+cargo build --release -Z unstable-options --artifact-dir "../binary"

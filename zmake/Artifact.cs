@@ -19,7 +19,7 @@ public sealed class Artifact : IEquatable<Artifact>
     /// </summary>
     public string Version { get; init; }
 
-    internal static readonly Artifact ZMakeArtifact = new Artifact("moe.kawayi.org","zmake",Program.VersionString);
+    internal static readonly Artifact ZMake = new Artifact("moe.kawayi","zmake",Program.VersionString);
 
     public static readonly Regex GroupIdRegex = new("^[a-z_]+[a-z0-9_]*(\\.[a-z_]+[a-z0-9_]*)+$");
     public static readonly Regex ArtifactIdRegex = new("^[a-z_]+[a-z0-9_]*$");

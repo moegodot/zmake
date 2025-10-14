@@ -5,16 +5,41 @@
         <TargetFramework>net9.0</TargetFramework>
         <ImplicitUsings>enable</ImplicitUsings>
         <Nullable>enable</Nullable>
-        <PublishAot>true</PublishAot>
         <InvariantGlobalization>true</InvariantGlobalization>
-        <IsAotCompatible>true</IsAotCompatible>
         <RootNamespace>ZMake</RootNamespace>
         <Version>0.1.0</Version>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     </PropertyGroup>
+    
+    <PropertyGroup Condition="'$(ZMakeAOT)' == 'enable'">
+        <IsAotCompatible>true</IsAotCompatible>
+        <PublishAot>true</PublishAot>
+        <InvariantGlobalization>true</InvariantGlobalization>
+        <StaticOpenSslLinking>true</StaticOpenSslLinking>
+        <StaticExecutable>true</StaticExecutable>
+        <StartupObject>ZMake.Program</StartupObject>
+        <LinkerFlavor>lld-link</LinkerFlavor>
+    </PropertyGroup>
+    
+    <ItemGroup Condition="'$(ZMakeAOT)' != 'enable'">
+        <PackageReference Include="Microsoft.ClearScript" Version="7.5.0" />
+    </ItemGroup>
+    
+    <ItemGroup Condition="'$(ZMakeAOT)' == 'enable'">
+        <Compile Remove="Full\**\*.cs" />
+    </ItemGroup>
 
     <ItemGroup>
       <PackageReference Include="Jint" Version="4.4.1" />
         <PackageReference Include="Semver" Version="3.0.0" />
+        <DirectPInvoke Include="zmake_transformer" />
+        <LinkerArg Condition="$(RuntimeIdentifier.StartsWith('linux'))" Include="-L$(MSBuildProjectDirectory)/../binary" />
+        <LinkerArg Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="/LIBPATH:$(MSBuildProjectDirectory)/../binary" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="zmake_transformer.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Userenv.lib" />
+        <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('linux'))" Include="libzmake_transformer.a" />
+        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
     </ItemGroup>
 
 </Project>

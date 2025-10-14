@@ -6,5 +6,5 @@ public interface ITarget
     
     IEnumerable<Name> Requirements { get; }
 
-    IEnumerable<ITask> Tasks { get; }
+    IEnumerable<ZTask> Tasks { get; }
 }

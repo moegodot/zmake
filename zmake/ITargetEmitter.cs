@@ -2,7 +2,7 @@ namespace ZMake;
 
 public interface ITargetEmitter
 {
-    Task<IEnumerable<ITask>> Emit(
+    Task<IEnumerable<ZTask>> Emit(
         BuildContext context,
         CancellationToken cancellationToken);
 }
