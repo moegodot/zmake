@@ -11,6 +11,13 @@ public class ClearScriptEngine
         var engine = new V8ScriptEngine($"v8-context-{context.Name}");
         
         engine.AddHostObject("$", HostItemFlags.None);
+        
+        engine.AddHostObject("$", HostItemFlags.None, engine);
+        
+        engine.DocumentSettings.AddSystemDocument("","");
+        
+        engine.DocumentSettings.AddSystemDocument("node:fs",DocumentCategory.Script, "");
+        engine.DocumentSettings.AddSystemDocument("node:process",DocumentCategory.Script, "");
 
         engine.DocumentSettings.Loader = new TypescriptLoader();
         engine.DocumentSettings.AccessFlags = DocumentAccessFlags.EnableFileLoading;

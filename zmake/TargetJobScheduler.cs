@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace ZMake;
 
 using System.Threading.Channels;
@@ -5,19 +7,23 @@ using System.Threading.Channels;
 /// <summary>
 /// from https://github.com/ChadBurggraf/parallel-extensions-extras/tree/master/TaskSchedulers
 /// </summary>
-public class TargetJobScheduler : TaskScheduler, IDisposable
+public sealed class TargetJobScheduler : TaskScheduler, IDisposable
 {
     private readonly Channel<Task> _channel;
     private readonly ChannelWriter<Task> _writer;
     private readonly ChannelReader<Task> _reader;
-    private readonly Task[] _workers;
-    private readonly CancellationTokenSource _cancellation;
+    private readonly Thread[] _workers;
+    private readonly CancellationTokenSource _source = new();
+    private readonly CancellationToken _token;
+    private readonly TaskFactory _choreTaskFactory;
+    private const string ThreadNamePrefix = nameof(TargetJobScheduler);
 
-    public TargetJobScheduler(int maxConcurrency)
+    public TargetJobScheduler(int maxConcurrency, ThreadPriority priority,TaskFactory choreTaskFactory,CancellationToken token)
     {
         MaximumConcurrencyLevel = maxConcurrency;
+        _choreTaskFactory = choreTaskFactory;
 
-        var options = new BoundedChannelOptions(10000)
+        var options = new BoundedChannelOptions(maxConcurrency * 128)
         {
             FullMode = BoundedChannelFullMode.Wait,
             SingleReader = false,
@@ -28,24 +34,30 @@ public class TargetJobScheduler : TaskScheduler, IDisposable
         _channel = Channel.CreateBounded<Task>(options);
         _writer = _channel.Writer;
         _reader = _channel.Reader;
-        _cancellation = new CancellationTokenSource();
+        _token = CancellationTokenSource.CreateLinkedTokenSource(token, _source.Token).Token;
 
-        _workers = new Task[maxConcurrency];
+        _workers = new Thread[maxConcurrency];
         for (int i = 0; i < maxConcurrency; i++)
         {
-            _workers[i] = Task.Run(WorkerLoop, _cancellation.Token);
+            _workers[i] = new Thread(WorkerLoop)
+            {
+                Name = $"{ThreadNamePrefix}-unknown",
+                Priority = priority,
+                IsBackground = true,
+            };
+            _workers[i].Start();
         }
     }
 
     protected override void QueueTask(Task task)
     {
-        if (_cancellation.Token.IsCancellationRequested)
+        if (_token.IsCancellationRequested)
             return;
 
         if (!_writer.TryWrite(task))
         {
             // 如果队列满了，异步写入
-            _ = _writer.WriteAsync(task, _cancellation.Token);
+            _choreTaskFactory.StartNew(async () => await _writer.WriteAsync(task,_token),_token);
         }
     }
 
@@ -56,7 +68,7 @@ public class TargetJobScheduler : TaskScheduler, IDisposable
             return false;
 
         // 如果当前线程是我们的工作线程之一，允许内联执行
-        if (Thread.CurrentThread.Name?.StartsWith("HPTaskScheduler") == true)
+        if (Thread.CurrentThread.Name?.StartsWith(ThreadNamePrefix) == true)
             return TryExecuteTask(task);
 
         return false;
@@ -69,38 +81,52 @@ public class TargetJobScheduler : TaskScheduler, IDisposable
 
     public override int MaximumConcurrencyLevel { get; }
 
-    private async Task WorkerLoop()
+    private void WorkerLoop()
     {
-        Thread.CurrentThread.Name = $"TargetScheduler-{Thread.CurrentThread.ManagedThreadId}";
+        Thread.CurrentThread.Name = $"{ThreadNamePrefix}-{Environment.CurrentManagedThreadId}";
 
-        try
+        while (!_token.IsCancellationRequested)
         {
-            await foreach (var task in _reader.ReadAllAsync(_cancellation.Token))
+            try
             {
-                TryExecuteTask(task);
+                var read = _reader.ReadAsync(_token).AsTask();
+                read.ConfigureAwait(false);
+                read.Wait(_token);
+
+                if (read.IsCompletedSuccessfully)
+                {
+                    TryExecuteTask(read.Result);
+                }
+                else if (read.Exception != null)
+                {
+                    throw read.Exception;
+                }
             }
-            
-        }
-        catch (OperationCanceledException) when (_cancellation.Token.IsCancellationRequested)
-        {
-            // 正常关闭
+            catch (OperationCanceledException) when (_token.IsCancellationRequested)
+            {
+                // do nothing
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception,"get an exception when execute a task");
+            }
         }
     }
 
     public void Dispose()
     {
-        _cancellation.Cancel();
+        _source.Cancel();
         _writer.Complete();
 
         try
         {
-            Task.WaitAll(_workers, TimeSpan.FromSeconds(5));
+            _ = _workers.Select(thread => thread.Join(5000)).ToArray();
         }
         catch (AggregateException)
         {
             // 忽略取消异常
         }
 
-        _cancellation.Dispose();
+        _source.Dispose();
     }
 }

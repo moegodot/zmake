@@ -1,11 +1,11 @@
 [package]
-name = "zmake_transformer"
+name = "zmake_native"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
 oxc = { version = "0.94.0", features = ["full"], default-features = true }
-
+zstd = "0.13.3"
 
 [lib]
 crate-type = ["staticlib", "dylib"]

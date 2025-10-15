@@ -1,3 +1,5 @@
+using Serilog;
+
 namespace ZMake;
 
 /// <summary>
@@ -14,18 +16,25 @@ public sealed class DwarfsTaskScheduler : TaskScheduler,IDisposable
 
     private readonly CancellationToken _token;
 
-    public DwarfsTaskScheduler(CancellationToken token,int threadCount,ThreadPriority priority)
+    private readonly Thread[] _workers;
+
+    private const string ThreadNamePrefix = nameof(DwarfsTaskScheduler);
+
+    public DwarfsTaskScheduler(int threadCount,ThreadPriority priority,CancellationToken token)
     {
         MaximumConcurrencyLevel = threadCount;
+        _workers = new Thread[threadCount];
         while (threadCount != 0)
         {
             var t = new Thread(WorkerLoop)
             {
-                Name = $"[{nameof(DwarfsTaskScheduler)}(IO task scheduler)]-{threadCount}",
+                Name = $"{ThreadNamePrefix}-unknown",
                 Priority = priority,
+                IsBackground = true,
             };
             t.Start();
             threadCount--;
+            _workers[threadCount] = t;
         }
 
         _token = CancellationTokenSource
@@ -37,6 +46,8 @@ public sealed class DwarfsTaskScheduler : TaskScheduler,IDisposable
 
     private void WorkerLoop()
     {
+        Thread.CurrentThread.Name = $"{ThreadNamePrefix}-{Environment.CurrentManagedThreadId}";
+        
         while (!_token.IsCancellationRequested)
         {
             try
@@ -61,10 +72,13 @@ public sealed class DwarfsTaskScheduler : TaskScheduler,IDisposable
                     TryExecuteTask(task);
                 }
             }
-            catch (Exception)
+            catch (OperationCanceledException) when (_token.IsCancellationRequested)
             {
-                // TODO:LOG
-                // TODO:REPORT
+                // do nothing
+            }
+            catch (Exception exception)
+            {
+                Log.Error(exception, "get an error when execute a task");
             }
         }
     }
@@ -99,7 +113,9 @@ public sealed class DwarfsTaskScheduler : TaskScheduler,IDisposable
 
     protected override bool TryExecuteTaskInline(Task task, bool taskWasPreviouslyQueued)
     {
-        if (!taskWasPreviouslyQueued) 
+        if (!(Thread.CurrentThread.Name ?? string.Empty).StartsWith(ThreadNamePrefix))
+            return false;
+        if (!taskWasPreviouslyQueued)
             return TryExecuteTask(task);
         if (TryDequeue(task))
             return TryExecuteTask(task);
@@ -118,6 +134,16 @@ public sealed class DwarfsTaskScheduler : TaskScheduler,IDisposable
     public void Dispose()
     {
         _source.Cancel();
+        
+        try
+        {
+            _ = _workers.Select(thread => thread.Join(5000)).ToArray();
+        }
+        catch (AggregateException)
+        {
+            // 忽略取消异常
+        }
+        
         _source.Dispose();
     }
 }

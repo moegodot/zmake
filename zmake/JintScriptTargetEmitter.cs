@@ -3,6 +3,7 @@ using System.Text.Json.Nodes;
 using Acornima.Ast;
 using Jint;
 using Jint.Native;
+using Jint.Native.Promise;
 using Jint.Runtime;
 
 namespace ZMake;
@@ -30,12 +31,21 @@ public class JintScriptTargetEmitter : ITargetEmitter
         Script = script;
     }
 
-    public static Engine InitiateEngine(Engine engine,List<ITask> results)
+    public static Engine InitiateEngine(Engine engine,List<ZTask> results)
     {
-        engine.Modules.Add("zmake:internal", builder =>
+        string module = "zmake:internal";
+        engine.Modules.Add(module, builder =>
         {
             builder.ExportValue("version", Program.VersionString);
+
+            builder.ExportFunction("", (values =>
+            {
+                
+            }));
         });
+
+        var mod = engine.Modules.Import(module);
+        engine.SetValue("$",mod);
         
         return engine;
     }
@@ -72,11 +82,11 @@ public class JintScriptTargetEmitter : ITargetEmitter
         return opt;
     }
 
-    private async Task<IEnumerable<ITask>> Evaluate(
+    private async Task<IEnumerable<ZTask>> Evaluate(
         BuildContext context,
         CancellationToken cancellationToken)
     {
-        List<ITask> tasks = [];
+        List<ZTask> tasks = [];
         
         var engine = InitiateEngine(new Engine(GetOptions()), tasks);
         
@@ -109,11 +119,11 @@ public class JintScriptTargetEmitter : ITargetEmitter
         return tasks;
     }
     
-    public Task<IEnumerable<ITask>> Emit(
+    public Task<IEnumerable<ZTask>> Emit(
         BuildContext context,
         CancellationToken cancellationToken)
     {
-        return (Task<IEnumerable<ITask>>)
+        return (Task<IEnumerable<ZTask>>)
             context.Items.GetOrAdd(new JintScript(Specific), 
             () => Evaluate(context, cancellationToken));
     }

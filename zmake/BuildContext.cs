@@ -23,7 +23,15 @@ public sealed class BuildContext
         !StartTime.HasValue ? throw new InvalidOperationException("the build has not started")
             : DateTime.Now.Subtract(StartTime.Value);
 
-    public event Action<BuildContext, LifecycleEventArgs> LifecycleEvent = (context, args) => { };
+    public event Action<BuildContext, LifecycleEventArgs> LifecycleEvent = (context, args) =>
+    {
+        Log.Verbose("Lifecycle event at {Context}:{Phase}.{Sequence}",context,args.Phase.Name,args.Sequence.ToString());
+    };
+
+    public override string ToString()
+    {
+        return $"build context `{Name}`";
+    }
 
     private readonly CancellationTokenSource _abortToken = new();
 

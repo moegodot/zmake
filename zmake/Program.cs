@@ -1,5 +1,6 @@
 ﻿using System.Reflection;
 using Serilog;
+using Serilog.Events;
 
 namespace ZMake;
 
@@ -25,6 +26,7 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
     internal static void Main(string[] args)
     {
         using var log = new LoggerConfiguration()
+            .MinimumLevel.Verbose()
             .WriteTo.Console()
             .CreateLogger();
         Log.Logger = log;
@@ -42,6 +44,10 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
             context.Run();
         }
         catch (Exception)
+        {
+            context.Abort();
+        }
+        finally
         {
             context.Abort();
         }
