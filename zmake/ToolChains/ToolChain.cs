@@ -4,7 +4,7 @@ public sealed class ToolChain
 {
     public static Name ZMake = Name.Create(Artifact.ZMake, ["toolchain","zmake"]);
     
-    public Dictionary<Name, string> Tools { get; init; } = [];
+    public Dictionary<Name, ITool> Tools { get; init; } = [];
     
     
 }

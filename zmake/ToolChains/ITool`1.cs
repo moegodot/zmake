@@ -1,6 +1,6 @@
 ﻿namespace ZMake.ToolChains;
 
-public interface ITool<T> : ITool
+public interface ITool<in T> : ITool
 {
-    
+    bool Execute(T argument);
 }

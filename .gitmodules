@@ -1,0 +1,6 @@
+[submodule "zstd"]
+	path = zstd
+	url = https://github.com/facebook/zstd
+[submodule "ZstdSharp"]
+	path = ZstdSharp
+	url = https://github.com/moegodot/ZstdSharp

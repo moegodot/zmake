@@ -6,7 +6,7 @@ namespace ZMake.Full;
 
 public class ClearScriptEngine
 {
-    public ClearScriptEngine(BuildContext context)
+    public ClearScriptEngine(BuildContext context,string targetFile)
     {
         var engine = new V8ScriptEngine($"v8-context-{context.Name}");
         

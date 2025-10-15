@@ -4,7 +4,7 @@ public interface ITool
 {
     string Program { get; }
     
-    string Version { get; }
+    string? Version { get; }
 
     bool Execute(IEnumerable<string> arguments);
 }

@@ -20,7 +20,33 @@ target_arch = sys.argv[3]
 target_aot = sys.argv[4]
 
 subprocess.run(['cargo', 'build', f'--release','-Z','unstable-options','--artifact-dir',f'{root_dir}/binary'],
-                cwd=f'{root_dir}/native')
+                cwd=f'{root_dir}/zmake_native')
+
+# TODO: USE THIS
+if False:
+    subprocess.run(["cmake", "-S", f"{root_dir}/zstd/build/cmake","-B",f"{root_dir}/zstd/cmakebuild/",
+                    "-DZSTD_MULTITHREAD_SUPPORT=ON", 
+                    "-DZSTD_BUILD_PROGRAMS=OFF", 
+                    "-DZSTD_LEGACY_SUPPORT=ON",
+                    f"-DCMAKE_INSTALL_PREFIX={root_dir}/binary/", 
+                    "-Wno-dev",
+                    "-DCMAKE_BUILD_TYPE=Release",
+                    "-DZSTD_BUILD_STATIC=ON", 
+                    "-DZSTD_BUILD_SHARED=ON",
+                    "-DZSTD_BUILD_TESTS=OFF",
+                    "-DZSTD_BUILD_CONTRIB=OFF"],
+                    cwd=f"{root_dir}/zstd")
+
+    if sys.platform.startswith('win'):
+        target = "INSTALL" 
+    else:
+        target = "install"
+
+    subprocess.run(["cmake", 
+                    "--build", f"{root_dir}/zstd/cmakebuild/",
+                    "--config","Release",
+                    "--target", target],
+                    cwd=f"{root_dir}/zstd")
 
 if target_os == 'auto':
     if sys.platform.startswith('win'):
@@ -39,3 +65,5 @@ if target_arch == 'auto':
 subprocess.run(['dotnet','publish', '-r', f'{target_os}-{target_arch}','-c',target_mode.title(), 
                 f'{root_dir}/zmake/ZMake.csproj', f'--property:ZMakeAOT={target_aot}',
                 '--output', f'{root_dir}/release'])
+
+# copy file
