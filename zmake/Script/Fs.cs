@@ -2,9 +2,8 @@
 
 namespace ZMake.Script;
 
-public static class Node
+public static class Fs
 {
-    #region fs
     public static string readFileSync(string path,string encoding)
     {
         return File.ReadAllText(path, Encoding.GetEncoding(encoding));
@@ -25,7 +24,4 @@ public static class Node
     {
         return Directory.EnumerateFileSystemEntries(dir).ToArray();
     }
-    #endregion
-
-    
 }

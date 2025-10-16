@@ -1,11 +1,16 @@
 ﻿using System.Collections.Concurrent;
+using System.Collections.ObjectModel;
 using Microsoft.ClearScript;
+using Microsoft.ClearScript.JavaScript;
 using Serilog;
 
 namespace ZMake.Full;
 
-public class TypescriptLoader : DefaultDocumentLoader
+public class ZMakeLoader : DefaultDocumentLoader
 {
+
+    public Dictionary<string, string> SpecialModules { get; init; } = [];
+    
     public override async Task<Document> LoadDocumentAsync(
         DocumentSettings settings,
         DocumentInfo? sourceInfo,
@@ -13,10 +18,24 @@ public class TypescriptLoader : DefaultDocumentLoader
         DocumentCategory category,
         DocumentContextCallback contextCallback)
     {
+        if (SpecialModules.TryGetValue(specifier, out var doc))
+        {
+            return new StringDocument(new DocumentInfo()
+            {
+                Category = ModuleCategory.Standard
+            }, doc);
+        }
+
         Log.Verbose("Try load document {Specifier}",specifier);
+        
+        if (!Path.HasExtension(specifier))
+        {
+            throw new NotSupportedException("Unsupported Directory Import");
+        }
+        
         var document = await base.LoadDocumentAsync(settings, sourceInfo, specifier, category, contextCallback);
 
-        if (document.Info.Category != DocumentCategory.Script || document is not StringDocument javascript)
+        if (document.Info.Category == DocumentCategory.Json || document is not StringDocument javascript)
         {
             Log.Verbose("Not transform {Document}", document.Info.Uri);
             return document;

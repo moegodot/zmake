@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Serilog;
 using Serilog.Events;
+using ZMake.Full;
 
 namespace ZMake;
 
@@ -36,6 +37,8 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
     {
         var file = DefaultFile;
         var index = 0;
+        var scriptMode = false;
+        var verbose = false;
         var useClearScript = 
 #if ZMakeAOT
                 false
@@ -63,7 +66,12 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
                 Console.WriteLine($"zmake version {VersionString}");
                 return 0;
             }
-            else if (arg == "--use-clearScript")
+            else if (arg == "--script-mode")
+            {
+                scriptMode = true;
+                _printBanner = false;
+            }
+            else if (arg == "--use-clear-script")
             {
 #if ZMakeAOT
                 throw new InvalidProgramException("can not use clear script in AOT mode");
@@ -78,6 +86,10 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
             {
                 _printBanner = false;
             }
+            else if (arg == "--verbose")
+            {
+                verbose = true;
+            }
             else if (arg == "decompress")
             {
                 throw new NotImplementedException();
@@ -86,9 +98,13 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
             {
                 throw new NotImplementedException();
             }
+            else if(!arg.StartsWith("-"))
+            {
+                file = arg;
+            }
             else
             {
-                Console.WriteLine($"Unknown argument `{arg}`");
+                throw new ArgumentException($"Unknown argument:`{arg}`");
                 return 1;
             }
         }
@@ -99,42 +115,57 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
         }
         
         using var log = new LoggerConfiguration()
-            .MinimumLevel.Verbose()
+            .MinimumLevel.Is(verbose ? LogEventLevel.Verbose : LogEventLevel.Information)
             .WriteTo.Console()
             .CreateLogger();
         Log.Logger = log;
+        
+        Log.Verbose("Target file {TargetFile}",file);
+        
+        var baseDir = Path.GetFullPath(Environment.CurrentDirectory);
+        var name = scriptMode ? "ScriptJsEngine" : "MainJsEngine";
+        IResolver resolver;
 
+        #if !ZMakeAOT
+        if (useClearScript)
+        {
+            resolver = new ClearScriptEngine(name, baseDir);
+        }
+#else
+        if(useClearScript){}
+#endif
+        else
+        {
+            resolver = new JintScriptEngine(name, baseDir);
+        }
+        
         BuildContext context = new()
         {
             Name = BuildContext.MainContextName
         };
 
-        Action<BuildContext> hook;
+        if (scriptMode)
+        {
+            try
+            {
+                resolver.Resolve(Path.GetFullPath(file));
+                Log.Verbose("Script executed successfully");
+            }
+            catch(Exception exception)
+            {
+                Log.Fatal(exception,"Script executed failed");
+                return 1;
+            }
 
-        #if !ZMakeAOT
-        if (useClearScript)
-        {
-            hook = buildContext =>
-            {
-                
-            };
+            return 0;
         }
-#else
-        if(false){}
-#endif
-        else
-        {
-            hook = buildContext =>
-            {
 
-            };
-        }
-        
-        context.LifecycleEvent += (context, args) =>
+        context.LifecycleEvent += (_, eventArgs) =>
         {
-            if (args.Phase != Phase.Initialize)
+            if (eventArgs.Phase == Phase.Initialize &&
+                eventArgs.Sequence == LifecycleSequence.Current)
             {
-                hook(context);
+                resolver.Resolve(Path.GetFullPath(file));
             }
         };
         

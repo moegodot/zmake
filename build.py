@@ -60,7 +60,7 @@ if target_arch == 'auto':
     if platform.machine().lower().startswith('amd64'):
         target_arch = 'x64'
     else:
-        target_arch = 'aarch64'
+        target_arch = 'arm64'
 
 subprocess.run(['dotnet','publish', '-r', f'{target_os}-{target_arch}','-c',target_mode.title(), 
                 f'{root_dir}/zmake/ZMake.csproj', f'--property:ZMakeAOT={target_aot}',

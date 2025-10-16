@@ -1,4 +1,5 @@
 ﻿using System.Runtime.InteropServices;
+using Serilog;
 
 namespace ZMake;
 
@@ -14,6 +15,8 @@ internal static partial class Transformer
     {
         string str;
         var result = Transform(source, sourceName);
+        Log.Verbose("Transform typescript(from {SourceName}) to:{Source}",
+            sourceName,source);
         try
         {
             str = Marshal.PtrToStringUTF8(result) ?? throw new InvalidDataException("got invalid utf-8 string");
