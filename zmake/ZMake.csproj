@@ -24,22 +24,23 @@
 
     <ItemGroup Condition="'$(ZMakeAOT)' != 'enable'">
         <PackageReference Include="Microsoft.ClearScript.Complete" Version="7.5.0" />
-        <None CopyToPublishDirectory="PreserveNewest" 
-              CopyToOutputDirectory="PreserveNewest"
-              Condition="$(RuntimeIdentifier.StartsWith('osx'))"
-              Include="$(MSBuildProjectDirectory)/../binary/libzmake_native.dylib" />
         <None CopyToPublishDirectory="PreserveNewest"
-              CopyToOutputDirectory="PreserveNewest"
-              Condition="$(RuntimeIdentifier.StartsWith('linux'))"
-              Include="$(MSBuildProjectDirectory)/../binary/libzmake_native.a" />
+            CopyToOutputDirectory="PreserveNewest"
+            Condition="$(RuntimeIdentifier.StartsWith('osx'))"
+            Include="$(MSBuildProjectDirectory)/../binary/libzmake_native.dylib" />
         <None CopyToPublishDirectory="PreserveNewest"
-              CopyToOutputDirectory="PreserveNewest"
-              Condition="$(RuntimeIdentifier.StartsWith('win'))"
-              Include="$(MSBuildProjectDirectory)/../binary/zmake_native.dll" />
+            CopyToOutputDirectory="PreserveNewest"
+            Condition="$(RuntimeIdentifier.StartsWith('linux'))"
+            Include="$(MSBuildProjectDirectory)/../binary/libzmake_native.a" />
+        <None CopyToPublishDirectory="PreserveNewest"
+            CopyToOutputDirectory="PreserveNewest"
+            Condition="$(RuntimeIdentifier.StartsWith('win'))"
+            Include="$(MSBuildProjectDirectory)/../binary/zmake_native.dll" />
     </ItemGroup>
 
     <ItemGroup Condition="'$(ZMakeAOT)' == 'enable'">
         <Compile Remove="Full\**\*.cs" />
+        <TrimmerRootAssembly Include="Jint" />
     </ItemGroup>
 
     <ItemGroup>
@@ -52,7 +53,7 @@
             Include="/LIBPATH:$(MSBuildProjectDirectory)/../binary" />
         <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="zmake_native.lib" />
         <NativeLibrary Condition="$(RuntimeIdentifier.StartsWith('win'))" Include="Userenv.lib" />
-        <NativeLibrary Condition="!$(RuntimeIdentifier.StartsWith('linux'))"
+        <NativeLibrary Condition="!$(RuntimeIdentifier.StartsWith('win'))"
             Include="libzmake_native.a" />
         <PackageReference Include="Serilog" Version="4.3.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />

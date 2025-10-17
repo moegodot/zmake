@@ -2,7 +2,9 @@
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
+#if !ZMakeAOT
 using ZMake.Full;
+#endif
 
 namespace ZMake;
 
@@ -141,7 +143,9 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
             resolver = new ClearScriptEngine(name, baseDir);
         }
 #else
-        if(useClearScript){}
+        if(false){
+            resolver = new JintScriptEngine(name, baseDir);
+        }
 #endif
         else
         {
