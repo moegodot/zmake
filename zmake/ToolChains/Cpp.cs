@@ -2,5 +2,5 @@
 
 public static class Cpp
 {
-    public static Name Compiler =  Name.Create(Artifact.ZMake, ["toolchain","cxx","compiler"]);
+    public static Name Compiler =  Name.Create(ArtifactName.ZMake, ["toolchain","cxx","compiler"]);
 }

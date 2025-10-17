@@ -6,6 +6,7 @@ using Jint.Native;
 using Jint.Native.Promise;
 using Jint.Runtime;
 using Jint.Runtime.Modules;
+using Serilog;
 using ZMake.Script;
 using Console = ZMake.Script.Console;
 
@@ -26,6 +27,10 @@ public class JintScriptEngine : IResolver
         options.Modules.ModuleLoader = new ZMakeLoader(BaseDirectory);
          var engine = InitiateEngine(new Engine(options));
          Engine = engine;
+         Log.Verbose(
+             "Create Jint engine `{Name}` with base directory `{BaseDirectory}`",
+             name,
+             BaseDirectory);
     }
     
     public static Engine InitiateEngine(Engine engine)
@@ -124,6 +129,7 @@ public class JintScriptEngine : IResolver
 
     public void Resolve(string path)
     {
-        Engine.Modules.Import(Path.GetFullPath(path));
+        path = Path.GetFullPath(path);
+        Engine.Modules.Import(path);
     }
 }

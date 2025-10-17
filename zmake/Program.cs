@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using Serilog;
 using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using ZMake.Full;
 
 namespace ZMake;
@@ -13,6 +14,8 @@ public class Program
     public static readonly string VersionString = $"{Version.Major}.{Version.Minor}.{Version.Revision}";
 
     public const string DefaultFile = "makefile.ts";
+
+    private static bool _color = true;
 
     private static bool _printBanner = true;
 
@@ -39,7 +42,9 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
         var index = 0;
         var scriptMode = false;
         var verbose = false;
-        var useClearScript = 
+        var baseDir = Path.GetFullPath(Environment.CurrentDirectory);
+        var buildDir = Path.Combine(baseDir, "build/");
+        var useClearScript =
 #if ZMakeAOT
                 false
 #else
@@ -70,6 +75,10 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
             {
                 scriptMode = true;
                 _printBanner = false;
+            }
+            else if (arg == "--no-color")
+            {
+                _color = false;
             }
             else if (arg == "--use-clear-script")
             {
@@ -116,13 +125,13 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
         
         using var log = new LoggerConfiguration()
             .MinimumLevel.Is(verbose ? LogEventLevel.Verbose : LogEventLevel.Information)
-            .WriteTo.Console()
+            .WriteTo.Console(theme: 
+                _color ? AnsiConsoleTheme.Literate : ConsoleTheme.None)
             .CreateLogger();
         Log.Logger = log;
         
         Log.Verbose("Target file {TargetFile}",file);
         
-        var baseDir = Path.GetFullPath(Environment.CurrentDirectory);
         var name = scriptMode ? "ScriptJsEngine" : "MainJsEngine";
         IResolver resolver;
 
@@ -138,11 +147,6 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
         {
             resolver = new JintScriptEngine(name, baseDir);
         }
-        
-        BuildContext context = new()
-        {
-            Name = BuildContext.MainContextName
-        };
 
         if (scriptMode)
         {
@@ -159,6 +163,14 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
 
             return 0;
         }
+        
+        BuildContext context = new()
+        {
+            Name = BuildContext.MainContextName,
+            ColoredOutput = _color,
+            BaseDirectory = baseDir,
+            BuildDirectory = buildDir
+        };
 
         context.LifecycleEvent += (_, eventArgs) =>
         {

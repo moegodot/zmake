@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Drawing;
 using Serilog;
 
 namespace ZMake;
@@ -12,6 +13,18 @@ public sealed class BuildContext
     public List<Phase> Phases { get; init; }
 
     public ConcurrentDictionary<Name, ITarget> Targets { get; init; } = [];
+    
+    /// <summary>
+    /// The root of source code.
+    /// </summary>
+    public required string BaseDirectory { get; init; }
+    
+    /// <summary>
+    /// The root of the binary.
+    /// </summary>
+    public required string BuildDirectory { get; init; }
+    
+    public bool ColoredOutput { get; init; }
     
     public ConcurrentDictionary<object, object> Items { get; } = [];
 
@@ -50,8 +63,22 @@ public sealed class BuildContext
         {
             throw new InvalidOperationException("the build has started");
         }
-        Log.Information("Building context {Context} started",Name);
         StartTime = DateTime.Now;
+        Log.Verbose(
+            "Build context `{Context}` start with arguments: " +
+            "BaseDirectory:{BaseDirectory};" +
+            "BuildDirectory:{BuildDirectory};" +
+            "ColoredOutput:{ColoredOutput};" +
+            "StartTime:{StartTime};" +
+            "Phases:{Phases};" +
+            "Items:{Items};",
+            Name,
+            BaseDirectory,
+            BuildDirectory,
+            ColoredOutput,
+            StartTime,
+            string.Join("->",Phases.Select((p)=>p.Name)),
+            string.Join(",",Items.Select(p=>$"{{`{p.Key}`:`{p.Value}`}}")));
     }
 
     public void Abort()

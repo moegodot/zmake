@@ -6,16 +6,16 @@ namespace ZMake;
 
 public sealed class Name : IEquatable<Name>
 {
-    public Artifact Artifact { get; init; }
+    public ArtifactName ArtifactName { get; init; }
     public IReadOnlyList<string> Names { get; init; }
 
-    public static readonly Name ZMake = new Name(Artifact.ZMake, ["root"]);
+    public static readonly Name ZMake = new Name(ArtifactName.ZMake, ["root"]);
     
     public static readonly Regex NameRegex = new("^[a-z_]+[a-z0-9_]*$");
 
-    private Name(Artifact artifact,string[] names)
+    private Name(ArtifactName artifactName,string[] names)
     {
-        Artifact = artifact;
+        ArtifactName = artifactName;
         Names = names;
     }
     
@@ -26,15 +26,15 @@ public sealed class Name : IEquatable<Name>
 
     public override int GetHashCode()
     {
-        return Names.Aggregate(Artifact.GetHashCode(), HashCode.Combine);
+        return Names.Aggregate(ArtifactName.GetHashCode(), HashCode.Combine);
     }
 
     public override string ToString()
     {
-        return $"{Artifact}#{string.Join(':', Names)}";
+        return $"{ArtifactName}#{string.Join(':', Names)}";
     }
 
-    public static bool TryCreate(Artifact artifact, IEnumerable<string> names,[NotNullWhen(true)]out Name? result)
+    public static bool TryCreate(ArtifactName artifactName, IEnumerable<string> names,[NotNullWhen(true)]out Name? result)
     {
         result = null;
         var nameArray = names.ToArray();
@@ -47,13 +47,13 @@ public sealed class Name : IEquatable<Name>
             }
         }
 
-        result = new(artifact, nameArray);
+        result = new(artifactName, nameArray);
         return true;
     }
 
-    public static Name Create(Artifact artifact, IEnumerable<string> names)
+    public static Name Create(ArtifactName artifactName, IEnumerable<string> names)
     {
-        if (!TryCreate(artifact, names, out var result))
+        if (!TryCreate(artifactName, names, out var result))
         {
             throw new ArgumentException("invalid names format");
         }
@@ -71,7 +71,7 @@ public sealed class Name : IEquatable<Name>
             return false;
         }
 
-        if (Artifact.TryParse(part[0], out Artifact? artifact,out _))
+        if (ArtifactName.TryParse(part[0], out ArtifactName? artifact,out _))
         {
             return TryCreate(artifact, part[1].Split(':'), out result);
         }
@@ -93,6 +93,6 @@ public sealed class Name : IEquatable<Name>
     {
         if (other is null) return false;
         if (ReferenceEquals(this, other)) return true;
-        return Artifact.Equals(other.Artifact) && Names.SequenceEqual(other.Names);
+        return ArtifactName.Equals(other.ArtifactName) && Names.SequenceEqual(other.Names);
     }
 }

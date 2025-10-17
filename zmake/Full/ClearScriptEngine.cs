@@ -55,6 +55,10 @@ public class ClearScriptEngine : IResolver
         engine.DocumentSettings.FileNameExtensions += ";ts";
 
         Engine = engine;
+        Log.Verbose(
+            "Create ClearScript engine `{Name}` with base directory `{BaseDirectory}`",
+            name,
+            BaseDirectory);
     }
 
     public void Resolve(string filePath)
