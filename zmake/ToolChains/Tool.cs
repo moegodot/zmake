@@ -1,4 +1,6 @@
-﻿namespace ZMake.ToolChains;
+﻿using System.Diagnostics;
+
+namespace ZMake.ToolChains;
 
 public class Tool(string program) : ITool
 {
@@ -21,10 +23,51 @@ public class Tool(string program) : ITool
         }
     }
 
-    public bool Execute(IEnumerable<string> arguments)
+    protected virtual bool TrySetArguments(ref List<string> arguments)
     {
+        return true;
+    }
+
+    protected virtual bool TrySetStartInfo(ProcessStartInfo info)
+    {
+        return true;
+    }
+
+    /// <summary>
+    /// 
+    /// </summary>
+    /// <returns>null means no exit code check</returns>
+    protected virtual int? GetExpectedExitCode()
+    {
+        return 0;
+    }
+
+    public async Task<bool> Execute(IEnumerable<string> arguments)
+    {
+        var args = arguments.ToList();
+        if (!TrySetArguments(ref args))
+        {
+            return false;
+        }
+
+        Process process = new();
+        process.StartInfo.ArgumentList.Clear();
+        args.ForEach(process.StartInfo.ArgumentList.Add);
+
+        if (!TrySetStartInfo(process.StartInfo))
+        {
+            return false;
+        }
+
+        if (!process.Start())
+        {
+            return false;
+        }
+
+        await process.WaitForExitAsync();
+
+        var expected = GetExpectedExitCode();
         
-        
-        throw new NotImplementedException();
+        return expected == null || process.ExitCode == expected;
     }
 }

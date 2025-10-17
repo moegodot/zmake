@@ -34,4 +34,8 @@ subprocess.run([python,f"{root_dir}/build.py",mode,"auto","auto"],check=True)
 
 run_zmake(['--help'])
 run_zmake(['--version'])
-run_zmake(['--verbose',"--script-mode",f"{test_dir}/test.ts", f"--use-{engine}"])
+run_zmake(['--verbose',"--script-mode",f"{test_dir}/test.ts", f"--use-{engine}"],
+            env = { 
+                "Z_MAKE_TEST_ENV_TRUE": "true",
+                "Z_MAKE_TEST_ENV_FALSE": "false",
+            })

@@ -2,5 +2,5 @@
 
 public interface ITool<in T> : ITool
 {
-    bool Execute(T argument);
+    Task<bool> Execute(T argument);
 }

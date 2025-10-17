@@ -5,32 +5,20 @@ namespace ZMake;
 
 public sealed class TargetSet : IEnumerable<ITarget>
 {
-    public List<ITarget> All { get; set; } = [];
+    public IReadOnlyList<ITarget> All { get; }
 
-    public List<ITarget> Build { get; set; } = [];
+    public IReadOnlyList<ITarget> Build { get; }
 
-    public List<ITarget> Test { get; set; } = [];
+    public IReadOnlyList<ITarget> Test { get; }
 
-    public List<ITarget> Install { get; set; } = [];
+    public IReadOnlyList<ITarget> Install { get; }
 
-    public void Add(ITarget target,string category)
+    public TargetSet(List<ITarget> all, List<ITarget> build, List<ITarget> test, List<ITarget> install)
     {
-        All.Add(target);
-        switch (category)
-        {
-            case "build":
-                Build.Add(target);
-                break;
-            case "test":
-                Test.Add(target);
-                break;
-            case "install":
-                Install.Add(target);
-                break;
-            default:
-                Log.Warning("Unknown target name for target:{Target}",target);
-                break;
-        }
+        All = all.ToArray();
+        Build = build.ToArray();
+        Test = test.ToArray();
+        Install = install.ToArray();
     }
 
     public IEnumerator<ITarget> GetEnumerator()

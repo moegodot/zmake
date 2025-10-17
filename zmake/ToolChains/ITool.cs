@@ -6,5 +6,5 @@ public interface ITool
     
     string? Version { get; }
 
-    bool Execute(IEnumerable<string> arguments);
+    Task<bool> Execute(IEnumerable<string> arguments);
 }
