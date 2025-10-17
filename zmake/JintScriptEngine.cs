@@ -14,25 +14,25 @@ namespace ZMake;
 
 public class JintScriptEngine : IResolver
 {
-    
+
     public Engine Engine { get; init; }
 
     public string? BaseDirectory { get; init; }
 
-    public JintScriptEngine(string name,string baseDir)
+    public JintScriptEngine(string name, string baseDir)
     {
         Options options = new();
         options.Strict = true;
         BaseDirectory = Path.GetFullPath(baseDir);
         options.Modules.ModuleLoader = new ZMakeLoader(BaseDirectory);
-         var engine = InitiateEngine(new Engine(options));
-         Engine = engine;
-         Log.Verbose(
-             "Create Jint engine `{Name}` with base directory `{BaseDirectory}`",
-             name,
-             BaseDirectory);
+        var engine = InitiateEngine(new Engine(options));
+        Engine = engine;
+        Log.Verbose(
+            "Create Jint engine `{Name}` with base directory `{BaseDirectory}`",
+            name,
+            BaseDirectory);
     }
-    
+
     public static Engine InitiateEngine(Engine engine)
     {
         engine.Modules.Add("node:fs", (builder) =>
@@ -88,32 +88,32 @@ public class JintScriptEngine : IResolver
         {
             builder.ExportFunction(nameof(Console.trace), (values) =>
             {
-                Console.trace(values.Select((value)=>(object)value.ToString()).ToArray());
+                Console.trace(values.Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.debug), (values) =>
             {
-                Console.debug(values.Select((value)=>(object)value.ToString()).ToArray());
+                Console.debug(values.Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.info), (values) =>
             {
-                Console.info(values.Select((value)=>(object)value.ToString()).ToArray());
+                Console.info(values.Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.log), (values) =>
             {
-                Console.log(values.Select((value)=>(object)value.ToString()).ToArray());
+                Console.log(values.Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.warn), (values) =>
             {
-                Console.warn(values.Select((value)=>(object)value.ToString()).ToArray());
+                Console.warn(values.Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.error), (values) =>
             {
-                Console.error(values.Select((value)=>(object)value.ToString()).ToArray());
+                Console.error(values.Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.assert), (values) =>
             {
                 Console.assert(values[0].AsBoolean(),
-                    values[1..].Select((value)=>(object)value.ToString()).ToArray());
+                    values[1..].Select((value) => (object)value.ToString()).ToArray());
             });
             builder.ExportFunction(nameof(Console.clear), (values) =>
             {
@@ -122,8 +122,8 @@ public class JintScriptEngine : IResolver
         });
 
         var console = engine.Modules.Import("node:console");
-        engine.Global.Set("console", console);
-        
+        engine.SetValue("console", console);
+
         return engine;
     }
 

@@ -17,7 +17,7 @@ if os.path.exists(f"{root_dir}/release"):
 target_mode = sys.argv[1].lower()
 target_os = sys.argv[2]
 target_arch = sys.argv[3]
-target_aot = sys.argv[4]
+target_aot = "disable"
 
 subprocess.run(['cargo', 'build', f'--release','-Z','unstable-options','--artifact-dir',f'{root_dir}/binary'],
                 cwd=f'{root_dir}/zmake_native')
@@ -62,9 +62,8 @@ if target_arch == 'auto':
     else:
         target_arch = 'arm64'
 
-subprocess.run(['dotnet','restore', f'{root_dir}/ZMake.sln'])
 subprocess.run(['dotnet','publish', '-r', f'{target_os}-{target_arch}','-c',target_mode.title(), 
                 f'{root_dir}/zmake/ZMake.csproj', f'--property:ZMakeAOT={target_aot}',
-                '--output', f'{root_dir}/release'])
+                '--output', f'{root_dir}/release'],check=True)
 
 # copy file

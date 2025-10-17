@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Diagnostics;
+using System.Reflection;
 using Serilog;
 using Serilog.Events;
 using Serilog.Sinks.SystemConsole.Themes;
@@ -87,7 +88,9 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
 #if ZMakeAOT
                 throw new InvalidProgramException("can not use clear script in AOT mode");
 #endif
+#pragma warning disable CS0162 
                 useClearScript = true;
+#pragma warning restore CS0162   
             }
             else if (arg == "--use-jint")
             {
@@ -143,63 +146,78 @@ $$$$$$$$\    $$ | \_/ $$ |   $$ |  $$ |   $$ | \$$\    $$$$$$$$\
             resolver = new ClearScriptEngine(name, baseDir);
         }
 #else
-        if(false){
-            resolver = new JintScriptEngine(name, baseDir);
+#pragma warning disable CS0162 
+        if(useClearScript)
+        {
+            throw new UnreachableException();
         }
+#pragma warning restore CS0162 
 #endif
         else
         {
             resolver = new JintScriptEngine(name, baseDir);
         }
 
-        if (scriptMode)
+        Stopwatch time = new();
+        time.Start();
+        try
         {
+
+            if (scriptMode)
+            {
+                try
+                {
+                    resolver.Resolve(Path.GetFullPath(file));
+                    Log.Verbose("Script executed successfully");
+                }
+                catch (Exception exception)
+                {
+                    Log.Fatal(exception, "Script executed failed");
+                    return 1;
+                }
+
+                return 0;
+            }
+
+            BuildContext context = new()
+            {
+                Name = BuildContext.MainContextName,
+                ColoredOutput = _color,
+                BaseDirectory = baseDir,
+                BuildDirectory = buildDir
+            };
+
+            context.LifecycleEvent += (_, eventArgs) =>
+            {
+                if (eventArgs.Phase == Phase.Initialize &&
+                    eventArgs.Sequence == LifecycleSequence.Current)
+                {
+                    resolver.Resolve(Path.GetFullPath(file));
+                }
+            };
+
             try
             {
-                resolver.Resolve(Path.GetFullPath(file));
-                Log.Verbose("Script executed successfully");
+                context.Start();
+                context.Run();
             }
-            catch(Exception exception)
+            catch (Exception)
             {
-                Log.Fatal(exception,"Script executed failed");
+                context.Abort();
                 return 1;
+            }
+            finally
+            {
+                context.Abort();
             }
 
             return 0;
         }
-        
-        BuildContext context = new()
-        {
-            Name = BuildContext.MainContextName,
-            ColoredOutput = _color,
-            BaseDirectory = baseDir,
-            BuildDirectory = buildDir
-        };
-
-        context.LifecycleEvent += (_, eventArgs) =>
-        {
-            if (eventArgs.Phase == Phase.Initialize &&
-                eventArgs.Sequence == LifecycleSequence.Current)
-            {
-                resolver.Resolve(Path.GetFullPath(file));
-            }
-        };
-        
-        try
-        {
-            context.Start();
-            context.Run();
-        }
-        catch (Exception)
-        {
-            context.Abort();
-            return 1;
-        }
         finally
         {
-            context.Abort();
+            Log.Information(
+                "Building costs {Time} milliseconds", 
+                time.Elapsed.TotalMilliseconds);
         }
-
-        return 0;
     }
 }

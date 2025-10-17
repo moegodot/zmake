@@ -9,6 +9,8 @@
         <RootNamespace>ZMake</RootNamespace>
         <Version>0.1.0</Version>
         <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <PublishReadyToRun>true</PublishReadyToRun>
+        <StartupObject>ZMake.Program</StartupObject>
     </PropertyGroup>
 
     <PropertyGroup Condition="'$(ZMakeAOT)' == 'enable'">
@@ -16,24 +18,27 @@
         <PublishAot>true</PublishAot>
         <StaticOpenSslLinking Condition="!$(RuntimeIdentifier.StartsWith('osx'))">true</StaticOpenSslLinking>
         <StaticExecutable>true</StaticExecutable>
-        <LinkerFlavor>lld</LinkerFlavor>
-        <StartupObject>ZMake.Program</StartupObject>
+        <LinkerFlavor Condition="!$(RuntimeIdentifier.StartsWith('win'))">lld</LinkerFlavor>
+        <LinkerFlavor Condition="$(RuntimeIdentifier.StartsWith('win'))">lld-link</LinkerFlavor>
         <TrimmerRemoveSymbols>true</TrimmerRemoveSymbols>
         <DefineConstants Condition="'$(ZMakeAOT)' == 'enable'">ZMakeAOT</DefineConstants>
     </PropertyGroup>
 
+    <!--
     <ItemGroup Condition="'$(ZMakeAOT)' != 'enable'">
+    -->
+    <ItemGroup>
         <PackageReference Include="Microsoft.ClearScript.Complete" Version="7.5.0" />
-        <None CopyToPublishDirectory="PreserveNewest"
-            CopyToOutputDirectory="PreserveNewest"
+        <None CopyToPublishDirectory="Always"
+            CopyToOutputDirectory="Always"
             Condition="$(RuntimeIdentifier.StartsWith('osx'))"
             Include="$(MSBuildProjectDirectory)/../binary/libzmake_native.dylib" />
-        <None CopyToPublishDirectory="PreserveNewest"
-            CopyToOutputDirectory="PreserveNewest"
+        <None CopyToPublishDirectory="Always"
+            CopyToOutputDirectory="Always"
             Condition="$(RuntimeIdentifier.StartsWith('linux'))"
             Include="$(MSBuildProjectDirectory)/../binary/libzmake_native.a" />
-        <None CopyToPublishDirectory="PreserveNewest"
-            CopyToOutputDirectory="PreserveNewest"
+        <None CopyToPublishDirectory="Always"
+            CopyToOutputDirectory="Always"
             Condition="$(RuntimeIdentifier.StartsWith('win'))"
             Include="$(MSBuildProjectDirectory)/../binary/zmake_native.dll" />
     </ItemGroup>

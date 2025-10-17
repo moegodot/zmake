@@ -9,8 +9,8 @@ test_dir = os.path.abspath(f"{root_dir}/tests/")
 python = shutil.which("python3")
 
 mode = sys.argv[1] # release or debug
-aot = sys.argv[2] # enable or disable
-engine = sys.argv[3] # jint or clear-script
+aot = "disable"
+engine = sys.argv[2] # jint or clear-script
 
 if python is None:
     python = shutil.which("python")
@@ -30,7 +30,7 @@ def run_zmake(app_args):
 
     subprocess.run(cmd + app_args, check=True)
 
-subprocess.run([python,f"{root_dir}/build.py",mode,"auto","auto",aot],check=True)
+subprocess.run([python,f"{root_dir}/build.py",mode,"auto","auto"],check=True)
 
 run_zmake(['--help'])
 run_zmake(['--version'])

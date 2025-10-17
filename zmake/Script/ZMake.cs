@@ -2,7 +2,6 @@ namespace ZMake.Script;
 
 public class ZMake(BuildContext context)
 {
-    
     public BuildContext Context { get; init; } = context;
 
     public string getProperty(string name)
@@ -27,4 +26,9 @@ public class ZMake(BuildContext context)
         };
     }
 
+    public void abortBuilding(string reason)
+    {
+        Context.Abort();
+        throw new InvalidOperationException($"abort building, reason:{reason}");
+    }
 }
